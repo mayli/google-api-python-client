@@ -962,16 +962,19 @@ class HttpRequest(object):
         }
 
     for retry_num in range(num_retries + 1):
+      resp = None
       if retry_num > 0:
         self._sleep(self._rand() * 2**retry_num)
         LOGGER.warning(
-            'Retry #%d for media upload: %s %s, following status: %d'
-            % (retry_num, self.method, self.uri, resp.status))
+            'Retry #%d for media upload: %s %s, following status: %s'
+            % (retry_num, self.method, self.uri, not resp or resp.status))
 
       try:
         resp, content = http.request(self.resumable_uri, method='PUT',
                                      body=data,
                                      headers=headers)
+      except socket.error:
+        continue
       except:
         self._in_error_state = True
         raise
